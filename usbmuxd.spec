@@ -1,6 +1,6 @@
 Name:          usbmuxd
 Version:       1.0.8
-Release:       11%{?dist}
+Release:       9%{?dist}
 Summary:       Daemon for communicating with Apple's iOS devices
 
 Group:         Applications/System
@@ -86,12 +86,6 @@ exit 0
 %{_libdir}/pkgconfig/libusbmuxd.pc
 
 %changelog
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.0.8-11
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.0.8-10
-- Mass rebuild 2013-12-27
-
 * Wed Nov 06 2013 Bastien Nocera <bnocera@redhat.com> 1.0.8-9
 - Add BR so scriptlets are expanded
 Resolves: #1017894
