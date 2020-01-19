@@ -1,56 +1,44 @@
 Name:          usbmuxd
-Version:       1.0.8
-Release:       9%{?dist}
+Version:       1.1.0
+Release:       1%{?dist}
 Summary:       Daemon for communicating with Apple's iOS devices
 
 Group:         Applications/System
 # All code is dual licenses as GPLv3+ or GPLv2+, except libusbmuxd which is LGPLv2+.
-License:       GPLv3+ or GPLv2+ and LGPLv2+
+License:       GPLv3+ or GPLv2+
 URL:           http://www.libimobiledevice.org/
 Source0:       http://www.libimobiledevice.org/downloads/%{name}-%{version}.tar.bz2
-Patch0:        0001-Use-systemd-to-start-usbmuxd.patch
 
+BuildRequires: libimobiledevice-devel
 BuildRequires: libplist-devel
 BuildRequires: libusbx-devel
-BuildRequires: cmake
-# For the systemd RPM macros
 BuildRequires: systemd
+
 Requires(pre): shadow-utils
-Requires(post): systemd-units
-Requires(preun): systemd-units
-Requires(postun): systemd-units
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+# for multilib upgrade path
+Obsoletes: usbmuxd < 1.0.9
 
 %description
 usbmuxd is a daemon used for communicating with Apple's iPod Touch, iPhone, 
 iPad and Apple TV devices. It allows multiple services on the device to be 
 accessed simultaneously.
 
-%package devel
-Summary: Development package for %{name}
-Group: Development/Libraries
-Requires: usbmuxd = %{version}-%{release}
-Requires: pkgconfig
-Requires: libusbx-devel
-
-%description devel
-Files for development with %{name}.
-
 %prep
 %setup -q
-%patch0 -p1 -b .systemd
 
 # Set the owner of the device node to be usbmuxd
-sed -i.owner 's/OWNER="usbmux"/OWNER="usbmuxd"/' udev/85-usbmuxd.rules.in
-sed -i.user 's/-U usbmux/-U usbmuxd/' udev/usbmuxd.service.in
+sed -i.owner 's/OWNER="usbmux"/OWNER="usbmuxd"/' udev/39-usbmuxd.rules.in
+sed -i.user 's/--user usbmux/--user usbmuxd/' systemd/usbmuxd.service.in
 
 %build
-export CMAKE_PREFIX_PATH=/usr
-%{cmake} .
+%configure
 
-make %{?_smp_mflags}
+make %{?_smp_mflags} V=1
 
 %install
-export CMAKE_PREFIX_PATH=/usr$RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
 %pre
@@ -61,31 +49,37 @@ useradd -r -g usbmuxd -d / -s /sbin/nologin \
 exit 0
 
 %post
-/sbin/ldconfig
 %systemd_post usbmuxd.service
 
 %preun
 %systemd_preun usbmuxd.service
 
 %postun
-/sbin/ldconfig
 %systemd_postun_with_restart usbmuxd.service 
 
 %files
-%doc AUTHORS README COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 README.devel
-/lib/udev/rules.d/85-usbmuxd.rules
-/lib/systemd/system/usbmuxd.service
-%{_bindir}/iproxy
+%license COPYING.GPLv2 COPYING.GPLv3
+%doc AUTHORS README
+%{_unitdir}/usbmuxd.service
+/usr/lib/udev/rules.d/39-usbmuxd.rules
 %{_sbindir}/usbmuxd
-%{_libdir}/libusbmuxd.so.*
-
-%files devel
-%doc README.devel
-%{_includedir}/*.h
-%{_libdir}/libusbmuxd.so
-%{_libdir}/pkgconfig/libusbmuxd.pc
+%{_datadir}/man/man1/usbmuxd.1.gz
 
 %changelog
+* Wed Mar 15 2017 Kalev Lember <klember@redhat.com> - 1.1.0-1
+- Update to 1.1.0
+- Resolves: #1431534
+
+* Thu Mar 09 2017 Kalev Lember <klember@redhat.com> - 1.0.8-12
+- Rebuilt for libplist 1.2
+- Related: #1430798
+
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.0.8-11
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.0.8-10
+- Mass rebuild 2013-12-27
+
 * Wed Nov 06 2013 Bastien Nocera <bnocera@redhat.com> 1.0.8-9
 - Add BR so scriptlets are expanded
 Resolves: #1017894
